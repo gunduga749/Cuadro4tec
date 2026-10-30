@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cuadro eléctrico</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef0f3; --text:#1c2430; --muted:#5b6675;
+  --box:#d9dde3; --box-edge:#aab1bc; --rail:#8d96a3;
+  --mod:#f4f5f7; --mod-edge:#9aa3b0; --slot:#2a303a;
+  --on:#2fa84f; --off:#c93a2f; --lever:#f2a31b; --lever-diff:#2d7fd3;
+  --card:#ffffff; --card-edge:#cfd5de; --lit:#fff3c4;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181e; --text:#e8ecf2; --muted:#9aa5b4;
+    --box:#2a313b; --box-edge:#434c59; --rail:#59616d;
+    --mod:#e6e9ee; --mod-edge:#8a93a0; --slot:#1a1e25;
+    --card:#1e242d; --card-edge:#37404c; --lit:#5a4a10;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181e; --text:#e8ecf2; --muted:#9aa5b4;
+  --box:#2a313b; --box-edge:#434c59; --rail:#59616d;
+  --mod:#e6e9ee; --mod-edge:#8a93a0; --slot:#1a1e25;
+  --card:#1e242d; --card-edge:#37404c; --lit:#5a4a10;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4}
+main{max-width:620px;margin:0 auto;padding:20px 14px 28px}
+h1{font-size:1.5rem;margin:0 0 4px}
+p.intro{margin:0 0 16px;color:var(--muted);font-size:.95rem}
+
+.box{background:var(--box);border:2px solid var(--box-edge);border-radius:10px;padding:14px 10px 10px}
+.rail{background:var(--rail);border-radius:4px;padding:10px 6px 8px;display:flex;gap:3px}
+.unit{display:flex;flex-direction:column;align-items:stretch;min-width:0}
+.unit.icp{flex:1.5}
+.unit.diff{flex:2}
+.unit.pia{flex:1}
+.mod{background:var(--mod);border:1.5px solid var(--mod-edge);border-radius:5px;height:150px;padding:8px 5px;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+.mod .tag{font-size:.62rem;font-weight:700;color:#3b4350;text-align:center;line-height:1.1}
+.test{width:16px;height:16px;border-radius:50%;background:#e7b52d;border:1px solid #9a7512;margin-top:2px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.2)}
+.slot{background:var(--slot);border-radius:4px;width:70%;max-width:34px;flex:1;position:relative;padding:3px}
+.unit.diff .slot{max-width:48px}
+.unit.icp .slot{max-width:40px}
+.lever{all:unset;cursor:pointer;position:absolute;left:3px;right:3px;height:48%;border-radius:3px;background:var(--lever);box-shadow:0 1px 3px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.4);transition:top .18s ease, bottom .18s ease;top:3px}
+.diff .lever{background:var(--lever-diff)}
+.icp .lever{background:#4a5260}
+.lever[aria-pressed="false"]{top:calc(52% - 3px)}
+.lever:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px #2d7fd3}
+.state{font-size:.7rem;font-weight:700;color:#fff;border-radius:3px;padding:1px 4px;min-width:28px;text-align:center}
+.state.up{background:var(--on)}
+.state.down{background:var(--off)}
+.name{font-size:.72rem;text-align:center;margin-top:6px;color:var(--text);line-height:1.15;overflow-wrap:anywhere;font-weight:600}
+.amps{display:block;font-weight:400;color:var(--muted);font-size:.66rem}
+
+.out{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px}
+.dev{background:var(--card);border:1.5px solid var(--card-edge);border-radius:8px;padding:8px 2px;text-align:center;transition:background .2s, border-color .2s}
+.dev .ico{font-size:1.6rem;filter:grayscale(1) opacity(.35);transition:filter .2s}
+.dev .lbl{font-size:.68rem;color:var(--muted);margin-top:2px}
+.dev.lit{background:var(--lit);border-color:#e0b43a}
+.dev.lit .ico{filter:none}
+.dev.lit .lbl{color:var(--text)}
+
+#msg{margin:14px 0 10px;padding:10px 12px;border-radius:8px;background:var(--card);border:1.5px solid var(--card-edge);font-size:.95rem;min-height:3.2em}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button.act{font:inherit;font-size:.9rem;padding:9px 14px;border-radius:8px;border:1.5px solid var(--card-edge);background:var(--card);color:var(--text);cursor:pointer}
+button.act:focus-visible{outline:3px solid #2d7fd3;outline-offset:2px}
+.cases{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:0 0 10px}
+.cb{font:inherit;font-size:.82rem;font-weight:600;padding:9px 0;border-radius:8px;border:1.5px solid var(--card-edge);background:var(--card);color:var(--text);cursor:pointer}
+.cb[aria-pressed="true"]{background:var(--lever-diff);border-color:var(--lever-diff);color:#fff}
+.cb:focus-visible{outline:3px solid #2d7fd3;outline-offset:2px}
+#case{margin:0 0 14px;padding:10px 12px;border-radius:8px;background:var(--card);border:1.5px solid var(--card-edge);font-size:.9rem}
+#case ul{margin:6px 0 0;padding-left:18px}
+#case li{margin:2px 0}
+@media (prefers-reduced-motion:reduce){.lever,.dev,.dev .ico{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Cuadro eléctrico</h1>
+  <p class="intro">Pulsa en las palancas para subirlas o bajarlas (arriba = conectado), o elige un caso para cargar su cuadro.</p>
+  <div class="cases" id="cases">
+    <button class="cb" type="button" aria-pressed="false">1</button>
+    <button class="cb" type="button" aria-pressed="false">2</button>
+    <button class="cb" type="button" aria-pressed="false">3</button>
+    <button class="cb" type="button" aria-pressed="false">4</button>
+    <button class="cb" type="button" aria-pressed="false">5</button>
+    <button class="cb" type="button" aria-pressed="false">6</button>
+  </div>
+  <div id="case" hidden></div>
+
+  <div class="box">
+    <div class="rail" id="rail"></div>
+  </div>
+
+  <div class="out" id="out"></div>
+  <div id="msg" role="status" aria-live="polite"></div>
+  <div class="btns">
+    <button class="act" id="all">Subir todo</button>
+    <button class="act" id="none">Bajar todo</button>
+  </div>
+</main>
+
+<script>
+(function(){
+  var circuits=[
+    {n:'Alumbrado',a:'10 A',i:'💡',l:'Luces'},
+    {n:'Enchufes',a:'16 A',i:'🔌',l:'Enchufes'},
+    {n:'Cocina',a:'25 A',i:'🍳',l:'Cocina'},
+    {n:'Lavadora',a:'20 A',i:'🧺',l:'Lavadora'},
+    {n:'Calefacción',a:'20 A',i:'🔥',l:'Calefacción'}
+  ];
+  // índice 0 = diferencial, 1..5 = magnetotérmicos
+  var on=[true,true,true,true,true];
+  var diff=true, icp=true;
+  var rail=document.getElementById('rail'), out=document.getElementById('out'), msg=document.getElementById('msg');
+  var levers=[], states=[], devs=[];
+  var fault=-1, timer=null;
+  var CASES=[
+    {t:'Caso 1: La cocina a oscuras',p:['Se va la luz solo en la cocina; el resto de la casa funciona.','Estaban la freidora de aire, el microondas y el hervidor en la misma regleta.'],s:{icp:true,diff:true,on:[true,true,false,true,true]}},
+    {t:'Caso 2: El taladro del sábado',p:['Mario taladra en la pared del baño y, de repente, se va la luz de toda la casa.','Tocó algo y notó un pequeño calambre.'],s:{icp:true,diff:false,on:[true,true,true,true,true]}},
+    {t:'Caso 3: Tarde de invierno',p:['Un domingo frío están encendidos la vitrocerámica, el horno, la lavadora y la calefacción eléctrica.','Se apaga toda la casa de golpe.'],s:{icp:false,diff:true,on:[true,true,true,true,true]}},
+    {t:'Caso 4: El chispazo',p:['Se oye un «¡pum!» y huele a quemado al enchufar una lámpara vieja.','Salta al instante, sin tardar nada.','El cable de la lámpara tenía el aislante roto y los dos hilos se tocaban.'],s:{icp:true,diff:true,on:[true,false,true,true,true]}},
+    {t:'Caso 5: Solo cuando llueve',p:['Cada vez que llueve fuerte se va la luz de toda la casa.','Al subir el diferencial, vuelve a saltar hasta que deja de llover.','Hay un foco exterior en el jardín con la caja de conexiones mal cerrada.'],fault:0,s:{icp:true,diff:false,on:[true,true,true,true,true]}},
+    {t:'Caso 6: La lavadora nueva',p:['Instalan una lavadora y, a los 5 minutos de ponerla, salta la luz.','Un vecino la había enchufado con un alargador y un ladrón sin toma de tierra.'],fault:3,s:{icp:true,diff:false,on:[true,true,true,true,true]}}
+  ];
+  var caseBtns=document.querySelectorAll('.cb'), caseBox=document.getElementById('case');
+  function setActive(n){
+    caseBtns.forEach(function(b,k){b.setAttribute('aria-pressed',k===n-1?'true':'false')});
+    if(!n) caseBox.hidden=true;
+  }
+  function loadCase(n){
+    var c=CASES[n-1];
+    clearTimeout(timer); timer=null;
+    icp=c.s.icp; diff=c.s.diff; on=c.s.on.slice(); fault=(c.fault===undefined?-1:c.fault);
+    caseBox.innerHTML='<strong>'+c.t+'</strong><ul>'+c.p.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>';
+    caseBox.hidden=false;
+    setActive(n); render();
+  }
+  function bounce(why){
+    if(timer) return;
+    diff=true; render();
+    timer=setTimeout(function(){
+      diff=false; timer=null; render();
+      msg.textContent=why;
+    },700);
+  }
+  caseBtns.forEach(function(b,k){b.addEventListener('click',function(){loadCase(k+1)})});
+
+  function unit(cls,tag,label,sub,idx){
+    var u=document.createElement('div'); u.className='unit '+cls;
+    var m=document.createElement('div'); m.className='mod';
+    var t=document.createElement('div'); t.className='tag'; t.textContent=tag; m.appendChild(t);
+    if(cls==='diff'){var tb=document.createElement('div'); tb.className='test'; tb.title='Botón de test'; m.appendChild(tb);}
+    var s=document.createElement('div'); s.className='slot';
+    var b=document.createElement('button'); b.className='lever'; b.type='button';
+    b.setAttribute('aria-label',label);
+    b.addEventListener('click',function(){toggle(idx)});
+    s.appendChild(b); m.appendChild(s);
+    var st=document.createElement('div'); st.className='state'; m.appendChild(st);
+    var nm=document.createElement('div'); nm.className='name';
+    nm.innerHTML=label+'<span class="amps">'+sub+'</span>';
+    u.appendChild(m); u.appendChild(nm); rail.appendChild(u);
+    levers.push(b); states.push(st);
+  }
+  unit('icp','ICP','ICP','Potencia',0);
+  unit('diff','DIFERENCIAL','Diferencial','30 mA',1);
+  circuits.forEach(function(c,k){unit('pia','PIA',c.n,c.a,k+2)});
+
+  circuits.forEach(function(c){
+    var d=document.createElement('div'); d.className='dev';
+    d.innerHTML='<div class="ico" aria-hidden="true">'+c.i+'</div><div class="lbl">'+c.l+'</div>';
+    out.appendChild(d); devs.push(d);
+  });
+
+  function toggle(i){
+    if(timer) return;
+    
+    if(i===0) icp=!icp; else if(i===1) diff=!diff; else on[i-2]=!on[i-2];
+    if(fault>=0 && icp && diff && on[fault]){
+      bounce(i===1
+        ? 'Al subir el diferencial vuelve a saltar al instante: la fuga sigue ahí. Prueba a bajar el magnetotérmico del circuito con la avería.'
+        : 'El diferencial ha saltado en cuanto ha vuelto a pasar corriente por el circuito de '+circuits[fault].n.toLowerCase()+': la fuga está ahí.');
+      return;
+    }
+    render();
+  }
+  function render(){
+    var all=[icp,diff].concat(on);
+    all.forEach(function(v,i){
+      levers[i].setAttribute('aria-pressed',v?'true':'false');
+      states[i].textContent=v?'I':'O';
+      states[i].className='state '+(v?'up':'down');
+    });
+    var live=[];
+    devs.forEach(function(d,k){
+      var p=icp&&diff&&on[k];
+      d.classList.toggle('lit',p);
+      if(p) live.push(circuits[k].n.toLowerCase());
+    });
+    if(!icp){
+      msg.textContent='El ICP está bajado: se ha cortado la entrada de corriente y no hay luz en toda la casa.';
+    }else if(!diff){
+      msg.textContent='El diferencial está bajado: no hay corriente en ningún circuito de la casa.';
+    }else if(live.length===0){
+      msg.textContent='El diferencial está subido, pero todos los magnetotérmicos están bajados: no llega corriente a ningún circuito.';
+    }else if(live.length===5){
+      msg.textContent='Todo subido: hay corriente en toda la casa.';
+    }else{
+      msg.textContent='Hay corriente en: '+live.join(', ')+'.';
+    }
+  }
+  document.getElementById('all').addEventListener('click',function(){clearTimeout(timer);timer=null;fault=-1;setActive(0);icp=true;diff=true;on=[true,true,true,true,true];render()});
+  document.getElementById('none').addEventListener('click',function(){clearTimeout(timer);timer=null;fault=-1;setActive(0);icp=false;diff=false;on=[false,false,false,false,false];render()});
+  render();
+})();
+</script>
+</body>
+</html>
